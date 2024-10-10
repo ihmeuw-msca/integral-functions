@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from integral_functions.methods import get_discretizations
+from integral_functions.methods.inducing_points import get_discretizations
 
 
 def get_weights(
