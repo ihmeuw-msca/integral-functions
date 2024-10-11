@@ -2,11 +2,12 @@ import numpy as np
 from numpy.typing import NDArray
 
 from integral_functions.methods.inducing_points import get_discretizations
+from integral_functions.typing import Numeric
 
 
 def get_weights(
-    L: int | float,
-    U: int | float,
+    lb: Numeric,
+    ub: Numeric,
     population_density: NDArray,
     grid_points: NDArray,
 ) -> NDArray:
@@ -33,9 +34,9 @@ def get_weights(
 
     Parameters
     ----------
-    L
+    lb
         Lower bound on the age range of interest.
-    U
+    ub
         Upper bound on the age range of interest.
     population_density
         The n x 1 vector of population densities per age bin. In mortality
@@ -54,7 +55,7 @@ def get_weights(
         A vector of the weights :math:`w_i` for :math:`i=1,\dots, n`.
 
     """
-    discretizations = get_discretizations(L, U, grid_points)
+    discretizations = get_discretizations(lb, ub, grid_points)
     age_bin_lengths = np.diff(discretizations)
     weights = population_density * age_bin_lengths
 

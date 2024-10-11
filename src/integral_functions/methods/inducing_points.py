@@ -3,10 +3,10 @@ from typing import Callable
 import numpy as np
 from numpy.typing import NDArray
 
+from integral_functions.typing import Numeric
 
-def midpoint_to_disc(
-    discpoint: int | float, gridpoint: int | float
-) -> int | float:
+
+def midpoint_to_disc(discpoint: Numeric, gridpoint: Numeric) -> Numeric:
     r"""Given a discretization point :math:`x_i` and a grid point math:`g_i`,
     this function calculates the following point via the formula.
     .. math::
@@ -28,7 +28,7 @@ def midpoint_to_disc(
 
     Returns
     -------
-    int | float
+    Numeric
         The next discretization point in the sequence.
 
     """
@@ -37,8 +37,8 @@ def midpoint_to_disc(
 
 
 def get_discretizations(
-    L: int | float,
-    U: int | float,
+    lb: Numeric,
+    ub: Numeric,
     grid_points: NDArray,
     grid_to_disc: Callable = midpoint_to_disc,
 ) -> NDArray:
@@ -49,9 +49,9 @@ def get_discretizations(
 
     Parameters
     ----------
-    L
+    lb
         Lower bound on the age range of interest.
-    U
+    ub
         Upper bound on the age range of interest.
     grid_points
         The n x 1 vector of points that serve as the evaluation points of the
@@ -71,12 +71,12 @@ def get_discretizations(
     grid_points = np.asarray(grid_points)
     grid_len = grid_points.shape[0]
 
-    disc_list = [grid_to_disc(L, grid_points[0])]
+    disc_list = [grid_to_disc(lb, grid_points[0])]
     for i in range(1, grid_len):
         discpoint = disc_list[i - 1]
         gridpoint = grid_points[i]
         disc_list.append(grid_to_disc(discpoint, gridpoint))
-    disc_list.insert(0, L)
-    assert disc_list[-1] == U
+    disc_list.insert(0, lb)
+    assert disc_list[-1] == ub
 
     return np.array(disc_list)
