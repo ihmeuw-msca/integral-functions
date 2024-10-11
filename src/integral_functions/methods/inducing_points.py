@@ -1,8 +1,12 @@
+from typing import Callable
+
 import numpy as np
 from numpy.typing import NDArray
 
 
-def midpoint_to_disc(discpoint: int | float, gridpoint: int | float) -> int | float:
+def midpoint_to_disc(
+    discpoint: int | float, gridpoint: int | float
+) -> int | float:
     r"""Given a discretization point $x_i$ and a grid point $g_i$, this function calculates the following point via the formula
     \[
         x_{i+1} = 2g_i - x_i.
@@ -22,7 +26,10 @@ def midpoint_to_disc(discpoint: int | float, gridpoint: int | float) -> int | fl
 
 
 def get_discretizations(
-    L: int | float, U: int | float, grid_points: NDArray, grid_to_disc: callable
+    L: int | float,
+    U: int | float,
+    grid_points: NDArray,
+    grid_to_disc: Callable = midpoint_to_disc,
 ) -> NDArray:
     r"""Creates appropriate discretizations from grid points. Effectively, this function will generate points such that
     every pair of adjacent elements in the returned vector will have a grid point (from grid_points) between it.

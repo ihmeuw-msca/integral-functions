@@ -5,7 +5,10 @@ from integral_functions.methods.inducing_points import get_discretizations
 
 
 def get_weights(
-    L: int | float, U: int | float, population_density: NDArray, grid_points: NDArray
+    L: int | float,
+    U: int | float,
+    population_density: NDArray,
+    grid_points: NDArray,
 ) -> NDArray:
     r"""Function that accepts a valid range of ages [L,U], a vector of population densities, and a vector of midpoints
     and generates the weights used in a numerical integration via midpoint quadrature rules. Importantly, this function
