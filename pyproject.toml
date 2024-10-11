@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [project.urls]
-homepage = "https://github.com/ihmeuw-msca/CorrelationCorrection"
+homepage = "https://github.com/ihmeuw-msca/integral-functions"
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "integration"]
