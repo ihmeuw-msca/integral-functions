@@ -11,7 +11,7 @@ def get_weights(
     population_density: NDArray,
     grid_points: NDArray,
 ) -> NDArray:
-    r"""Function that accepts a valid range of ages [L, U], a vector of
+    r"""Function that accepts a valid range of ages [lb, ub], a vector of
     population densities, and a vector of midpoints and generates the weights
     used in a numerical integration via midpoint quadrature rules. Importantly,
     this function does not return the numerically integrated values, only the
@@ -28,9 +28,10 @@ def get_weights(
 
         w_i = p_i(discretizations_{i+1} - discretizations_{i})
 
-    where $p_i$ is the $i$th element of the population_density vector, and the
-    discretizations vector is obtained from the get_discretizations function,
-    which builds age bins around the grid_points argument.
+    where :math:`p_i` is the :math:`i`th element of the population_density
+    vector, and the discretizations vector is obtained from the
+    `get_discretizations` function, which builds age bins around the
+    `grid_points` argument.
 
     Parameters
     ----------
