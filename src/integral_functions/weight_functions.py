@@ -3,6 +3,53 @@ from numpy.typing import NDArray
 
 from integral_functions.methods.inducing_points import get_discretizations
 from integral_functions.typing import Numeric
+from integral_functions.vectorized_funcs import build_indices_midpoint
+
+
+def build_integration_weights_midpoint(
+    lb: NDArray, ub: NDArray, grid_points: NDArray
+) -> tuple[NDArray, tuple[NDArray, NDArray]]:
+    """Compute the integration weights on the grid with midpoint rule.
+
+    Assumptions
+    -----------
+    We do not explicitly check the following assumptions for efficiency. But
+    they should be check before calling this function.
+
+    * The values in `grid_points` are sorted in ascending order and are unique.
+    * `lb` is strictly less than `ub`.
+    * `lb` is greater than the first value in `grid_points`.
+    * `ub` is less than the last value in `grid_points`.
+
+    Parameters
+    ----------
+    lb
+        Lower bound of the integration interval.
+    ub
+        Upper bound of the integration interval.
+    grid_points
+        The grid points used for the integration.
+
+    Returns
+    -------
+    NDArray
+        The integration weights.
+
+    """
+    lb_index = np.searchsorted(grid_points, lb, side="right") - 1
+    ub_index = np.searchsorted(grid_points, ub, side="left")
+    sizes = ub_index - lb_index
+    diffs = np.diff(grid_points)
+    row_index, col_index = build_indices_midpoint(
+        lb_index, ub_index, sizes.sum()
+    )
+
+    val = diffs[col_index]
+    # rewrite the end intervals sizes
+    val[np.hstack([0, sizes[:-1]])] = grid_points[lb_index + 1] - lb
+    val[sizes - 1] = ub - grid_points[ub_index - 1]
+
+    return (val, (row_index, col_index))
 
 
 def get_weights(

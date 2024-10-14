@@ -4,7 +4,7 @@ cimport cython
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def build_indices(long[::1] lb_index, long[::1] ub_index, long size):
+def build_indices_midpoint(long[::1] lb_index, long[::1] ub_index, long size):
     cdef int nrow = lb_index.size
     cdef int i = 0
     cdef int j = 0
