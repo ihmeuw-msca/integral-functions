@@ -46,8 +46,9 @@ def build_integration_weights_midpoint(
 
     val = diffs[col_index]
     # rewrite the end intervals sizes
-    val[np.hstack([0, sizes[:-1]])] = grid_points[lb_index + 1] - lb
-    val[sizes - 1] = ub - grid_points[ub_index - 1]
+    end_points = np.hstack([0, np.cumsum(sizes)])
+    val[end_points[:-1]] = grid_points[lb_index + 1] - lb
+    val[end_points[1:] - 1] = ub - grid_points[ub_index - 1]
 
     return (val, (row_index, col_index))
 
