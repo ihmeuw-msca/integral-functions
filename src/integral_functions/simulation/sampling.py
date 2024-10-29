@@ -28,6 +28,7 @@ def sample_probability_of_death(
     density: Callable,
     true_prob: Callable,
     cdf_gridsize: int = 10000,
+    prob_args: dict | None = None,
 ) -> float:
     """Samples sample_size many draws from density and calculates the probability of death by true_prob given the age. Then, according to this probability the samples are chosen to be
     dead or alive according to a Bernoulli draw with parameter p = true_prob. It then finds the average number of dead observations.
@@ -49,7 +50,8 @@ def sample_probability_of_death(
     age_range = age_cdf[1, :]
     samples = np.random.rand(sample_size)
     age_samples = np.interp(samples, cdf, age_range)
-    prob_death = true_prob(age_samples)
+    prob_args = prob_args or {}
+    prob_death = true_prob(age_samples, **prob_args)
     dead_or_alive = np.random.binomial(n=1, p=prob_death)
     sum_dead_or_alive = np.sum(dead_or_alive)
     avg_dead_or_alive = sum_dead_or_alive / sample_size
