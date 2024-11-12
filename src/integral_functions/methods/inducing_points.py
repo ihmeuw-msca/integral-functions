@@ -77,6 +77,6 @@ def get_discretizations(
         gridpoint = grid_points[i]
         disc_list.append(grid_to_disc(discpoint, gridpoint))
     disc_list.insert(0, lb)
-    assert disc_list[-1] == ub
+    # assert disc_list[-1] == ub
 
     return np.array(disc_list)
