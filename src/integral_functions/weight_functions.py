@@ -56,7 +56,7 @@ def build_integration_weights_midpoint(
 def get_weights(
     lb: Numeric,
     ub: Numeric,
-    population_density: NDArray,
+    population_density: NDArray | float,
     grid_points: NDArray,
 ) -> NDArray:
     r"""Function that accepts a valid range of ages [lb, ub], a vector of
@@ -104,6 +104,10 @@ def get_weights(
         A vector of the weights :math:`w_i` for :math:`i=1,\dots, n`.
 
     """
+    if isinstance(population_density, float):
+        population_density = [population_density]
+        population_density *= grid_points.shape[0]
+        population_density = np.array(population_density)
     discretizations = get_discretizations(lb, ub, grid_points)
     age_bin_lengths = np.diff(discretizations)
     weights = population_density * age_bin_lengths
