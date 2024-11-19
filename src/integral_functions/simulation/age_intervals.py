@@ -74,3 +74,18 @@ def int_bounded_intervals_generator(
     age_ranges = np.vstack([age_starts, age_ends])
 
     return age_ranges
+
+
+def pop_density_generator(
+    lb: Numeric,
+    ub: Numeric,
+    population_densities: NDArray,
+    grid_points: NDArray,
+) -> NDArray:
+    pop_densities_lb = population_densities[grid_points >= lb]
+    pop_densities_ub = population_densities[grid_points <= ub]
+    intersection = np.intersect1d(pop_densities_lb, pop_densities_ub)
+    intersection_correct_order = pop_densities_lb[
+        np.isin(pop_densities_lb, intersection)
+    ]
+    return intersection_correct_order
