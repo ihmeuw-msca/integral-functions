@@ -7,7 +7,7 @@ from integral_functions.vectorized_funcs import build_indices_midpoint
 
 
 def build_integration_weights_midpoint(
-    lb: NDArray, ub: NDArray, grid_points: NDArray
+    lb: Numeric | NDArray, ub: Numeric | NDArray, grid_points: NDArray
 ) -> tuple[NDArray, tuple[NDArray, NDArray]]:
     """Compute the integration weights on the grid with midpoint rule.
 
@@ -36,6 +36,11 @@ def build_integration_weights_midpoint(
         The integration weights.
 
     """
+    if isinstance(lb, Numeric):
+        lb = np.array([lb])
+    if isinstance(ub, Numeric):
+        ub = np.array([ub])
+
     lb_index = np.searchsorted(grid_points, lb, side="right") - 1
     ub_index = np.searchsorted(grid_points, ub, side="left")
     sizes = ub_index - lb_index
@@ -47,16 +52,18 @@ def build_integration_weights_midpoint(
     val = diffs[col_index]
     # rewrite the end intervals sizes
     end_points = np.hstack([0, np.cumsum(sizes)])
-    val[end_points[:-1]] = grid_points[lb_index + 1] - lb
-    val[end_points[1:] - 1] = ub - grid_points[ub_index - 1]
+    val[end_points[:-1]] = np.minimum(grid_points[lb_index + 1], ub) - lb
+    val[end_points[1:] - 1] = ub - np.maximum(lb, grid_points[ub_index - 1])
+    # val[end_points[:-1]] = np.minimum(grid_points[lb_index + 1], ub) - lb
+    # val[end_points[1:] - 1] = np.maximum(lb, grid_points[ub_index]) - ub
 
     return (val, (row_index, col_index))
 
 
 def get_weights(
-    lb: Numeric,
-    ub: Numeric,
-    population_density: NDArray | float,
+    lb: NDArray,
+    ub: NDArray,
+    population_density: NDArray,
     grid_points: NDArray,
 ) -> NDArray:
     r"""Function that accepts a valid range of ages [lb, ub], a vector of
@@ -104,12 +111,75 @@ def get_weights(
         A vector of the weights :math:`w_i` for :math:`i=1,\dots, n`.
 
     """
-    if isinstance(population_density, float):
-        population_density = [population_density]
-        population_density *= grid_points.shape[0]
-        population_density = np.array(population_density)
-    discretizations = get_discretizations(lb, ub, grid_points)
-    age_bin_lengths = np.diff(discretizations)
+    age_bin_lengths, idxs = build_integration_weights_midpoint(
+        lb=lb, ub=ub, grid_points=grid_points
+    )
+    # grid_points_interval = grid_points[idxs[1]]
+
+    population_density = population_density[idxs[1]]
     weights = population_density * age_bin_lengths
+    print(f"This is the age bin length: {age_bin_lengths}")
 
     return weights
+
+
+def get_interval_grid_points(
+    lb: NDArray, ub: NDArray, grid_points: NDArray
+) -> NDArray:
+    """Returns the grid points restriced to the interval between lb and ub.
+    We want to return this since we can then evaluate the functions on only these
+    grid points and assume the function evaluations on the grid points outside
+    the interval go to zero.
+
+    Parameters
+    ----------
+    lb
+        Lower bound of the integration interval.
+    ub
+        Upper bound of the integration interval.
+    grid_points
+        The grid points used for the integration.
+
+    Returns
+    -------
+    NDArray
+        The grid points restricted to the interval of interest.
+
+    """
+    _, idxs = build_integration_weights_midpoint(
+        lb=lb, ub=ub, grid_points=grid_points
+    )
+    _, col_index = idxs
+    # col_index += 1
+    return grid_points[col_index]
+
+
+def get_interval_population_density(
+    lb: NDArray, ub: NDArray, population_density: NDArray, grid_points: NDArray
+) -> NDArray:
+    """Returns the population restriced to the interval between lb and ub.
+    We want to return this since we can then evaluate the functions on only these
+    grid points and assume the function evaluations on the grid points outside
+    the interval go to zero.
+
+    Parameters
+    ----------
+    lb
+        Lower bound of the integration interval.
+    ub
+        Upper bound of the integration interval.
+    grid_points
+        The grid points used for the integration.
+
+    Returns
+    -------
+    NDArray
+        The grid points restricted to the interval of interest.
+
+    """
+    _, idxs = build_integration_weights_midpoint(
+        lb=lb, ub=ub, grid_points=grid_points
+    )
+    _, col_index = idxs
+    # col_index += 1
+    return population_density[col_index]
