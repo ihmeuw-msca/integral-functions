@@ -1,7 +1,12 @@
+from typing import Callable
+
 import numpy as np
 from numpy.typing import NDArray
 
+from integral_functions.config import AGE_MID
 from integral_functions.methods.inducing_points import get_discretizations
+from integral_functions.simulation.age_distribution import age_distribution
+from integral_functions.simulation.integrate_functions import integrate_denom
 from integral_functions.typing import Numeric
 from integral_functions.vectorized_funcs import build_indices_midpoint
 
@@ -54,18 +59,18 @@ def build_integration_weights_midpoint(
     end_points = np.hstack([0, np.cumsum(sizes)])
     val[end_points[:-1]] = np.minimum(grid_points[lb_index + 1], ub) - lb
     val[end_points[1:] - 1] = ub - np.maximum(lb, grid_points[ub_index - 1])
-    # val[end_points[:-1]] = np.minimum(grid_points[lb_index + 1], ub) - lb
-    # val[end_points[1:] - 1] = np.maximum(lb, grid_points[ub_index]) - ub
 
     return (val, (row_index, col_index))
 
 
-def get_weights(
+def get_weights_densities(
     lb: NDArray,
     ub: NDArray,
-    population_density: NDArray,
+    age_density: Callable,
     grid_points: NDArray,
-) -> NDArray:
+    low_age: Numeric = 0,
+    high_age: Numeric = 95,
+) -> tuple[NDArray, NDArray]:
     r"""Function that accepts a valid range of ages [lb, ub], a vector of
     population densities, and a vector of midpoints and generates the weights
     used in a numerical integration via midpoint quadrature rules. Importantly,
@@ -111,20 +116,48 @@ def get_weights(
         A vector of the weights :math:`w_i` for :math:`i=1,\dots, n`.
 
     """
-    age_bin_lengths, idxs = build_integration_weights_midpoint(
-        lb=lb, ub=ub, grid_points=grid_points
+    discretizations = get_discretizations(
+        lb=low_age, ub=high_age, grid_points=grid_points
     )
-    # grid_points_interval = grid_points[idxs[1]]
+    age_bin_lengths, idxs = build_integration_weights_midpoint(
+        lb=lb, ub=ub, grid_points=discretizations
+    )
+    discretizations_restrict = discretizations[idxs[1]]
+    grid_points_restrict = get_points_in_interval(
+        lb=lb, ub=ub, points_to_restrict=grid_points, get_grid_points=True
+    )
+    # This fixes if you start at a low enough lb
+    if grid_points_restrict[0] > grid_points_restrict[1]:
+        grid_points_restrict = grid_points_restrict[1:]
+    # This fixes when a grid point is lower than your lowest age bin group
+    if grid_points_restrict[0] < discretizations_restrict[0]:
+        grid_points_restrict = grid_points_restrict[1:]
+    discretizations_restrict[0] = lb
+    discretizations_restrict = np.append(discretizations_restrict, ub)
+    population_density = get_interval_population_density(
+        age_density=age_density, discretizations=discretizations_restrict
+    )
+    # This fixes when your highest grid point is too high
+    if grid_points_restrict.shape[0] != population_density.shape[0]:
+        grid_points_restrict = grid_points_restrict[:-1]
 
-    population_density = population_density[idxs[1]]
+    # print(f"This is age bin lengths: {age_bin_lengths}")
+    # print(f"This is discretizations restricted: {discretizations_restrict}")
+    # print(f"This is grid points restricted: {grid_points_restrict}")
+
     weights = population_density * age_bin_lengths
-    print(f"This is the age bin length: {age_bin_lengths}")
+    # print(
+    #     f"Does weights match the size of grid_points: {grid_points_restrict.shape[0] == weights.shape[0]}"
+    # )
 
-    return weights
+    return (grid_points_restrict, weights, population_density)
 
 
-def get_interval_grid_points(
-    lb: NDArray, ub: NDArray, grid_points: NDArray
+def get_points_in_interval(
+    lb: NDArray,
+    ub: NDArray,
+    points_to_restrict: NDArray,
+    get_grid_points: bool = False,
 ) -> NDArray:
     """Returns the grid points restriced to the interval between lb and ub.
     We want to return this since we can then evaluate the functions on only these
@@ -147,15 +180,18 @@ def get_interval_grid_points(
 
     """
     _, idxs = build_integration_weights_midpoint(
-        lb=lb, ub=ub, grid_points=grid_points
+        lb=lb, ub=ub, grid_points=points_to_restrict
     )
     _, col_index = idxs
+    if get_grid_points:
+        col_index = np.append(arr=col_index, values=(col_index[-1] + 1))
     # col_index += 1
-    return grid_points[col_index]
+    return points_to_restrict[col_index]
 
 
 def get_interval_population_density(
-    lb: NDArray, ub: NDArray, population_density: NDArray, grid_points: NDArray
+    age_density: Callable,
+    discretizations: NDArray,
 ) -> NDArray:
     """Returns the population restriced to the interval between lb and ub.
     We want to return this since we can then evaluate the functions on only these
@@ -177,9 +213,14 @@ def get_interval_population_density(
         The grid points restricted to the interval of interest.
 
     """
-    _, idxs = build_integration_weights_midpoint(
-        lb=lb, ub=ub, grid_points=grid_points
-    )
-    _, col_index = idxs
-    # col_index += 1
-    return population_density[col_index]
+    pop_list = []
+    for i in range(1, len(discretizations)):
+        integral_over_interval = integrate_denom(
+            density=age_density,
+            age_start=discretizations[i - 1],
+            age_end=discretizations[i],
+            age_mid=AGE_MID,
+        )
+        pop_list.append(integral_over_interval)
+    pop_dens = np.array(pop_list)
+    return pop_dens
