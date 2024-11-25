@@ -5,7 +5,6 @@ from numpy.typing import NDArray
 
 from integral_functions.config import AGE_MID
 from integral_functions.methods.inducing_points import get_discretizations
-from integral_functions.simulation.age_distribution import age_distribution
 from integral_functions.simulation.integrate_functions import integrate_denom
 from integral_functions.typing import Numeric
 from integral_functions.vectorized_funcs import build_indices_midpoint
