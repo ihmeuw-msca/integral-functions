@@ -140,14 +140,7 @@ def get_weights_densities(
     if grid_points_restrict.shape[0] != population_density.shape[0]:
         grid_points_restrict = grid_points_restrict[:-1]
 
-    # print(f"This is age bin lengths: {age_bin_lengths}")
-    # print(f"This is discretizations restricted: {discretizations_restrict}")
-    # print(f"This is grid points restricted: {grid_points_restrict}")
-
     weights = population_density * age_bin_lengths
-    # print(
-    #     f"Does weights match the size of grid_points: {grid_points_restrict.shape[0] == weights.shape[0]}"
-    # )
 
     return (grid_points_restrict, weights, population_density)
 

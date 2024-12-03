@@ -2,11 +2,18 @@ from typing import Callable
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.special import expit
+
+from integral_functions.simulation.integrate_functions import (
+    integrate_cov,
+    integrate_denom,
+)
+from integral_functions.typing import Numeric
 
 
 def _cdf_gen(
-    age_start: float,
-    age_end: float,
+    age_start: Numeric,
+    age_end: Numeric,
     density: Callable,
     cdf_gridsize: int = 10000,
     age_mid: int = 35,
@@ -22,8 +29,8 @@ def _cdf_gen(
 
 
 def sample_probability_of_death(
-    age_start: float,
-    age_end: float,
+    age_start: Numeric,
+    age_end: Numeric,
     sample_size: int,
     density: Callable,
     true_prob: Callable,
@@ -57,3 +64,51 @@ def sample_probability_of_death(
     avg_dead_or_alive = sum_dead_or_alive / sample_size
 
     return avg_dead_or_alive
+
+
+def probability_of_death_no_error(
+    age_start: Numeric,
+    age_end: Numeric,
+    density: Callable,
+    true_prob: Callable,
+    age_mid: Numeric,
+    link_function: Callable | None = None,
+) -> float:
+    """Calculates the average number of dead observations in the age interval of interest (from age_start to age_end).
+    No sampling error is incurred since integration is done directly on the relevant functions.
+
+    Parameters
+    ----------
+    age_start
+        Lower bound on the age interval of interest.
+    age_end
+        Upper bound on the age interval of interest.
+    density
+        Probability density function of the distribution of ages for the population.
+    true_prob
+        Death rate function that takes as input an age and calculates the probability of death given the age.
+    age_mid
+        Knot where the age distribution changes from one function to the next.
+    link_function
+        The link function used for the death rate function. Assumed to be expit.
+
+    Returns
+    -------
+    DataFrame
+        The dataframe of required data.
+
+    """
+    if isinstance(link_function, Callable):
+        true_prob = link_function(true_prob)
+    num = integrate_cov(
+        func=true_prob,
+        density=density,
+        age_start=age_start,
+        age_end=age_end,
+        age_mid=age_mid,
+    )
+    denom = integrate_denom(
+        density=density, age_start=age_start, age_end=age_end, age_mid=age_mid
+    )
+
+    return num / denom
