@@ -21,7 +21,7 @@ def func3(x: NDArray) -> NDArray:
 
 def death_rate_function(
     age: NDArray,
-    c1: Numeric = 0.1,
+    c1: Numeric = 0.001,
     c2: Numeric = 1,
     c3: Numeric = 0.0017,
     func1: Callable = func1,
@@ -33,7 +33,7 @@ def death_rate_function(
 
 def expit_death_rate_function(
     age: NDArray,
-    c1: Numeric = 0.1,
+    c1: Numeric = 0.001,
     c2: Numeric = 1,
     c3: Numeric = 0.0017,
     func1: Callable = func1,
