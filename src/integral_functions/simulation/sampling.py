@@ -101,24 +101,35 @@ def probability_of_death_no_error(
         The dataframe of required data.
 
     """
+    if isinstance(link_function, Callable):
+        true_prob = link_function(true_prob)
     if age_mid is None:
         int_exp = integrate_expecatation
         int_dens = integrate_density
+        num = int_exp(
+            func=true_prob,
+            density=density,
+            age_start=age_start,
+            age_end=age_end,
+        )
+        denom = int_dens(density=density, age_start=age_start, age_end=age_end)
     else:
         int_exp = integrate_cov
         int_dens = integrate_denom
-    if isinstance(link_function, Callable):
-        true_prob = link_function(true_prob)
+        num = int_exp(
+            func=true_prob,
+            density=density,
+            age_start=age_start,
+            age_end=age_end,
+            age_mid=age_mid,
+        )
+        denom = int_dens(
+            density=density,
+            age_start=age_start,
+            age_end=age_end,
+            age_mid=age_mid,
+        )
+
     # prob_args = prob_args or {}
-    num = int_exp(
-        func=true_prob,
-        density=density,
-        age_start=age_start,
-        age_end=age_end,
-        age_mid=age_mid,
-    )
-    denom = int_dens(
-        density=density, age_start=age_start, age_end=age_end, age_mid=age_mid
-    )
 
     return num / denom
