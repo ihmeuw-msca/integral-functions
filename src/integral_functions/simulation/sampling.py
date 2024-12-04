@@ -39,6 +39,7 @@ def sample_probability_of_death(
     sample_size: int,
     density: Callable,
     true_prob: Callable,
+    age_mid: int | None,
     cdf_gridsize: int = 10000,
     prob_args: dict | None = None,
 ) -> float:
@@ -56,10 +57,13 @@ def sample_probability_of_death(
     Returns:
         float: The average number of samples who are chosen binomially to have died.
     """
-    sample_size = int(sample_size)
-    age_cdf = _cdf_gen(age_start, age_end, density, cdf_gridsize)
+    if age_mid is None:
+        age_cdf = _cdf_gen(age_start, age_end, density, cdf_gridsize, None)
+    else:
+        age_cdf = _cdf_gen(age_start, age_end, density, cdf_gridsize)
     cdf = age_cdf[0, :]
     age_range = age_cdf[1, :]
+    sample_size = int(sample_size)
     samples = np.random.rand(sample_size)
     age_samples = np.interp(samples, cdf, age_range)
     prob_args = prob_args or {}
