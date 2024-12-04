@@ -18,10 +18,13 @@ def _cdf_gen(
     age_end: Numeric,
     density: Callable,
     cdf_gridsize: int = 10000,
-    age_mid: int = 35,
+    age_mid: int | None = 35,
 ) -> NDArray:
     age_range = np.linspace(age_start, age_end, cdf_gridsize)
-    distribution = np.array([density(age, age_mid) for age in age_range])
+    if age_mid is None:
+        distribution = np.array([density(age) for age in age_range])
+    else:
+        distribution = np.array([density(age, age_mid) for age in age_range])
 
     distribution /= np.sum(distribution)
     cdf = np.cumsum(distribution)
