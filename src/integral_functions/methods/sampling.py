@@ -2,13 +2,10 @@ from typing import Callable
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.special import expit
 
-from integral_functions.simulation.integrate_functions import (
-    integrate_cov,
-    integrate_denom,
+from integral_functions.methods.integrate_functions import (
     integrate_density,
-    integrate_expecatation,
+    integrate_expectation,
 )
 from integral_functions.typing import Numeric
 
@@ -18,13 +15,9 @@ def _cdf_gen(
     age_end: Numeric,
     density: Callable,
     cdf_gridsize: int = 10000,
-    age_mid: int | None = 35,
 ) -> NDArray:
     age_range = np.linspace(age_start, age_end, cdf_gridsize)
-    if age_mid is None:
-        distribution = np.array([density(age) for age in age_range])
-    else:
-        distribution = np.array([density(age, age_mid) for age in age_range])
+    distribution = np.array([density(age) for age in age_range])
 
     distribution /= np.sum(distribution)
     cdf = np.cumsum(distribution)
@@ -39,7 +32,6 @@ def sample_probability_of_death(
     sample_size: int,
     density: Callable,
     true_prob: Callable,
-    age_mid: int | None,
     cdf_gridsize: int = 10000,
     prob_args: dict | None = None,
 ) -> float:
@@ -57,10 +49,7 @@ def sample_probability_of_death(
     Returns:
         float: The average number of samples who are chosen binomially to have died.
     """
-    if age_mid is None:
-        age_cdf = _cdf_gen(age_start, age_end, density, cdf_gridsize, None)
-    else:
-        age_cdf = _cdf_gen(age_start, age_end, density, cdf_gridsize)
+    age_cdf = _cdf_gen(age_start, age_end, density, cdf_gridsize)
     cdf = age_cdf[0, :]
     age_range = age_cdf[1, :]
     sample_size = int(sample_size)
@@ -80,9 +69,7 @@ def probability_of_death_no_error(
     age_end: Numeric,
     density: Callable,
     true_prob: Callable,
-    age_mid: Numeric | None,
     link_function: Callable | None = None,
-    # prob_args: dict | None = None,
 ) -> float:
     """Calculates the average number of dead observations in the age interval of interest (from age_start to age_end).
     No sampling error is incurred since integration is done directly on the relevant functions.
@@ -97,8 +84,6 @@ def probability_of_death_no_error(
         Probability density function of the distribution of ages for the population.
     true_prob
         Death rate function that takes as input an age and calculates the probability of death given the age.
-    age_mid
-        Knot where the age distribution changes from one function to the next.
     link_function
         The link function used for the death rate function. Assumed to be expit.
 
@@ -110,33 +95,14 @@ def probability_of_death_no_error(
     """
     if isinstance(link_function, Callable):
         true_prob = link_function(true_prob)
-    if age_mid is None:
-        int_exp = integrate_expecatation
-        int_dens = integrate_density
-        num = int_exp(
-            func=true_prob,
-            density=density,
-            age_start=age_start,
-            age_end=age_end,
-        )
-        denom = int_dens(density=density, age_start=age_start, age_end=age_end)
-    else:
-        int_exp = integrate_cov
-        int_dens = integrate_denom
-        num = int_exp(
-            func=true_prob,
-            density=density,
-            age_start=age_start,
-            age_end=age_end,
-            age_mid=age_mid,
-        )
-        denom = int_dens(
-            density=density,
-            age_start=age_start,
-            age_end=age_end,
-            age_mid=age_mid,
-        )
-
-    # prob_args = prob_args or {}
+    int_exp = integrate_expectation
+    int_dens = integrate_density
+    num = int_exp(
+        func=true_prob,
+        density=density,
+        age_start=age_start,
+        age_end=age_end,
+    )
+    denom = int_dens(density=density, age_start=age_start, age_end=age_end)
 
     return num / denom

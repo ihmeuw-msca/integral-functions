@@ -6,6 +6,10 @@ from numpy.typing import NDArray
 from scipy.special import expit
 
 from integral_functions.config import c1, c2, c3
+from integral_functions.methods.sampling import (
+    probability_of_death_no_error,
+    sample_probability_of_death,
+)
 from integral_functions.simulation.age_distribution import age_distribution
 from integral_functions.simulation.age_intervals import (
     int_bounded_intervals_generator,
@@ -16,10 +20,6 @@ from integral_functions.simulation.death_rate import (
     func2,
     func3,
 )
-from integral_functions.simulation.sampling import (
-    probability_of_death_no_error,
-    sample_probability_of_death,
-)
 from integral_functions.typing import Numeric
 from integral_functions.weight_functions import get_weights_densities
 
@@ -27,7 +27,6 @@ from integral_functions.weight_functions import get_weights_densities
 def simulation_data_generator(
     low_age: Numeric,
     high_age: Numeric,
-    mid_age: Numeric,
     num_groups: Numeric,
     age_interval_lb: Numeric,
     age_interval_ub: Numeric,
@@ -101,7 +100,6 @@ def simulation_data_generator(
                 age_end=row.iloc[1],
                 density=age_distribution,
                 true_prob=expit_death_rate_function,
-                age_mid=mid_age,
             ),
             axis=1,
         )

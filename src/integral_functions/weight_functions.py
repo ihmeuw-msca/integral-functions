@@ -3,9 +3,8 @@ from typing import Callable
 import numpy as np
 from numpy.typing import NDArray
 
-from integral_functions.config import AGE_MID
 from integral_functions.methods.inducing_points import get_discretizations
-from integral_functions.simulation.integrate_functions import integrate_denom
+from integral_functions.methods.integrate_functions import integrate_density
 from integral_functions.typing import Numeric
 from integral_functions.vectorized_funcs import build_indices_midpoint
 
@@ -207,11 +206,10 @@ def get_interval_population_density(
     """
     pop_list = []
     for i in range(1, len(discretizations)):
-        integral_over_interval = integrate_denom(
+        integral_over_interval = integrate_density(
             density=age_density,
             age_start=discretizations[i - 1],
             age_end=discretizations[i],
-            age_mid=AGE_MID,
         )
         pop_list.append(integral_over_interval)
     pop_dens = np.array(pop_list)
